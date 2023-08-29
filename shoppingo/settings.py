@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY','')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG','')
+DEBUG = os.environ.get('DEBUG',False)
 
 ALLOWED_HOSTS = []
 
@@ -153,8 +153,8 @@ REST_FRAMEWORK = {
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=int(os.environ.get('ACCESS_TOKEN_LIFETIME'))),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.environ.get('REFRESH_TOKEN_LIFETIME'))),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=int(os.environ.get('ACCESS_TOKEN_LIFETIME',1))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.environ.get('REFRESH_TOKEN_LIFETIME',1))),
 }
 
 
@@ -176,15 +176,15 @@ CACHES = {
     }
 }
 
-FE_DOMAIN = os.environ.get('FE_DOMAIN')
+FE_DOMAIN = os.environ.get('FE_DOMAIN','http://localhost:8000')
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST=os.environ.get('EMAIL_HOST')
-EMAIL_PORT=os.environ.get('EMAIL_PORT')
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
+EMAIL_HOST=os.environ.get('EMAIL_HOST','')
+EMAIL_PORT=os.environ.get('EMAIL_PORT','')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER','')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD','')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL','')
 
 LOGFILES_DIRECTORY_NAME = 'log_files'
 
