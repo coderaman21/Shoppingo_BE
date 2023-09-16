@@ -147,6 +147,7 @@ REST_FRAMEWORK = {
 
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticatedOrReadOnly",),
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
     
 }
@@ -185,6 +186,10 @@ EMAIL_PORT=os.environ.get('EMAIL_PORT','')
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER','')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD','')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL','')
+
+
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID','')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET','')
 
 LOGFILES_DIRECTORY_NAME = 'log_files'
 
