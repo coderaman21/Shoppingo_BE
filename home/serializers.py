@@ -17,7 +17,7 @@ class SubCategorySerializer(serializers.ModelSerializer):
     
     class Meta :
         model = SubCategory
-        fields = ['sub_category','category','id']
+        fields = ['sub_category','id']
 
 class CategorySerializer(serializers.ModelSerializer):
     sub_categories = serializers.SerializerMethodField()
@@ -58,7 +58,7 @@ class ProductSerializer(serializers.ModelSerializer):
     
     class Meta :
         model = Product
-        fields = ['id','name','price','image','discount','rating']
+        fields = ['id','name','price','image','discount','rating','slug']
 
 class userCartSerializer(serializers.ModelSerializer):
 

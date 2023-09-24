@@ -8,8 +8,10 @@ router.register('category',CategoryViewSet,basename='category')
 router.register('cart',UserCartViewSet,basename='cart')
 
 urlpatterns = [
-    path('product/<uuid:productId>/',ProductViewSet.as_view(),name='product'),
-    path('product-review/',ProductReviewViewSet.as_view(),name='product_review')
+    path('product/<str:productSlug>/',ProductViewSet.as_view(),name='product'),
+    path('product-review/',ProductReviewViewSet.as_view(),name='product_review'),
+    path('search/<str:query>/',SearchViewSet.as_view(),name='search'),
+
    
 ]
 urlpatterns+=router.urls

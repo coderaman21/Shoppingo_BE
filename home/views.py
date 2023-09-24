@@ -3,21 +3,23 @@ from order.models import OrderItem,ORDER_STATUS
 
 from .serializers import *
 
+from utility.pagination import StandardResultsSetPagination
 from shoppingo.settings import logger
 import traceback
 
 from rest_framework.response import Response
 from rest_framework import status,generics,viewsets,permissions
+from django.db.models import Q
 
 class ProductViewSet(generics.GenericAPIView):
 
     serializer_class = ProductDetailSerializer
 
-    def get(self,request,productId):
+    def get(self,request,productSlug):
         ''' return a detailed info of product.'''
         try :
             # get product with it's related and reverse related objects like brand,tags,category and reviews
-            product = Product.objects.filter(id = productId).select_related('brand','category').prefetch_related('product_review','tags')
+            product = Product.objects.filter(slug = productSlug).select_related('brand','category').prefetch_related('product_review','tags')
             if not product.exists():
                 raise Exception('error : No product found with given id!')
             
@@ -32,6 +34,7 @@ class ProductViewSet(generics.GenericAPIView):
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
  
     serializer_class = CategorySerializer
+    pagination_class = StandardResultsSetPagination
 
     def list(self, request, *args, **kwargs):
         ''' return all categories with their sub categories'''
@@ -54,6 +57,15 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
             
             subCategory = subCategory[0]
             products = subCategory.product_set.all() # getting the products
+            
+            # paginating the products
+            page = self.paginate_queryset(products)
+            if page is not None:
+                # serialize the page 
+                serializer = ProductSerializer(page,many = True,context={'request':request})
+               
+                return self.get_paginated_response(serializer.data)
+            
             serializer = ProductSerializer(products,many=True,context={"request": request})
             return Response(serializer.data,status=status.HTTP_200_OK)
             
@@ -117,7 +129,7 @@ class UserCartViewSet(viewsets.ModelViewSet):
             quantity = int(request.data['quantity'])
             cartItem = UserCart.objects.filter(product_id=productId,user = user)
             if not  cartItem.exists():
-                raise Exception('error : Please check id again!')
+                raise Exception('error : Please check product id again!')
             
             cartItem = cartItem[0]
             
@@ -178,6 +190,36 @@ class ProductReviewViewSet(generics.GenericAPIView):
             return Response({'success':'Product review posted'},status=status.HTTP_200_OK)
             
                  
+        except Exception as e :
+            logger.warning(traceback.format_exc())
+            return Response({'error':str(e)},status=status.HTTP_400_BAD_REQUEST)
+
+class SearchViewSet(generics.GenericAPIView):
+    serializer_class = ProductSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def get(self,request,query):
+        ''' get products by searching name , category or brand name '''
+        try :
+            # search the query product name , sub-category and brand name
+            productsByName = Product.objects.filter(name__icontains = query)
+            productsByCategory = Product.objects.filter(category__sub_category__icontains = query)
+            productsByBrand = Product.objects.filter(brand__brand_name__icontains = query)
+
+            # merge all the results 
+            allProducts = productsByName.union(productsByCategory,productsByBrand) # By default, union() removes duplicates from the result.
+
+            # paginating the products
+            page = self.paginate_queryset(allProducts)
+            if page is not None:
+                # serialize the page 
+                serializer = self.serializer_class(page,many = True,context={'request':request})
+               
+                return self.get_paginated_response(serializer.data)
+            
+            serializer = self.serializer_class(allProducts,many=True,context={"request": request})
+            return Response(serializer.data,status=status.HTTP_200_OK)
+
         except Exception as e :
             logger.warning(traceback.format_exc())
             return Response({'error':str(e)},status=status.HTTP_400_BAD_REQUEST)

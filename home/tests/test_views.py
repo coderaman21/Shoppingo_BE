@@ -44,8 +44,8 @@ class HomeTestCase(APITestCase):
 
     # >>>>>>>>>>>>>>>>>>>> Product apis tests >>>>>>>>>>>>>>>>>>
     def test_get_product_details(self):
-        ''' test getting a product details by it's id.'''
-        url = reverse('product',kwargs={'productId':self.product.id})
+        ''' test getting a product details by it's slug.'''
+        url = reverse('product',kwargs={'productSlug':self.product.slug})
 
         response = self.client.get(url,format='json')
         self.assertEqual(response.status_code , status.HTTP_200_OK)
@@ -61,8 +61,8 @@ class HomeTestCase(APITestCase):
         self.assertEqual(data['brand']['brand_name'],self.product.brand.brand_name)
         self.assertEqual(data['category']['sub_category'],self.product.category.sub_category)
 
-        # test with wrong product id
-        url = reverse('product',kwargs={'productId':self.category.id})
+        # test with wrong product slug
+        url = reverse('product',kwargs={'productSlug':'anything-but-not-product-slug'})
         response = self.client.get(url,format='json')
         self.assertEqual(response.status_code , status.HTTP_400_BAD_REQUEST)
     
@@ -91,15 +91,24 @@ class HomeTestCase(APITestCase):
         self.assertEqual(response.status_code,status.HTTP_200_OK)
 
         data = response.json()
+
+        # check response format
+
+        # >>> pagination response >>>
+        self.assertIn("count",data)
+        self.assertIn("next",data)
+        self.assertIn("previous",data)
+        self.assertIn("results",data)
         
         # Create a RequestFactory instance to replicate request to pass in serializer
         factory = RequestFactory()
         # Create a GET request and attach the user to it
         request = factory.get(url)
 
+
         # test that the product data we get in response is in the required format or not
         productData = ProductSerializer(self.product,context={'request':request}).data
-        self.assertEqual(productData,data[0]) 
+        self.assertEqual(productData,data["results"][0]) 
 
         # test with a wrong sub category id 
         url = reverse('category-detail',args=[self.category.id])
@@ -269,3 +278,52 @@ class HomeTestCase(APITestCase):
         }
         response  = self.client.post(url,data, headers=self.headers , format='json')
         self.assertEqual(response.status_code,status.HTTP_400_BAD_REQUEST)
+
+    # >>>>>>>>>>>>>>>>> Search Api test >>>>>>>>>>>>>>>>>>>>>>>
+    def test_search(self):
+        ''' test searching products by product name , sub-category and brand name.'''
+       
+        # by product name
+        url = reverse('search',kwargs={'query':'test'})
+        
+        response = self.client.get(url)
+        self.assertEqual(response.status_code , status.HTTP_200_OK)
+        data = response.json()
+
+        # >>> check pagination response >>>
+        self.assertIn("count",data)
+        self.assertIn("next",data)
+        self.assertIn("previous",data)
+        self.assertIn("results",data)
+
+        # atleast one result shuld show up
+        self.assertGreaterEqual(len(data["results"]),1)
+
+        # by sub-category
+        url = reverse('search',kwargs={'query':'men'})
+        
+        response = self.client.get(url)
+        self.assertEqual(response.status_code , status.HTTP_200_OK)
+        data = response.json()
+
+        # atleast one result shuld show up
+        self.assertGreaterEqual(len(data["results"]),1)
+
+        # by brand name
+        url = reverse('search',kwargs={'query':'ajio'})
+        
+        response = self.client.get(url)
+        self.assertEqual(response.status_code , status.HTTP_200_OK)
+        data = response.json()
+
+        # atleast one result shuld show up
+        self.assertGreaterEqual(len(data["results"]),1)
+
+        # query with anything that doesn't exists in db
+        url = reverse('search',kwargs={'query':'anything'})
+        
+        response = self.client.get(url)
+        self.assertEqual(response.status_code , status.HTTP_200_OK)
+        data = response.json()
+    
+        self.assertEqual(len(data["results"]),0)
